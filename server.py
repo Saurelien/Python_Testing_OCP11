@@ -34,7 +34,7 @@ def showsummary():
 
 
 @app.route('/book/<competition>/<club>')
-def book(competition,club):
+def book(competition, club):
     foundclub = [c for c in clubs if c['name'] == club][0]
     foundcompetition = [c for c in competitions if c['name'] == competition][0]
     if foundclub and foundcompetition:
@@ -44,7 +44,7 @@ def book(competition,club):
         return render_template('welcome.html', club=club, competitions=competitions)
 
 
-@app.route('/purchasePlaces',methods=['POST'])
+@app.route('/purchasePlaces', methods=['POST'])
 def purchaseplaces():
     competition = [c for c in competitions if c['name'] == request.form['competition']][0]
     club = [c for c in clubs if c['name'] == request.form['club']][0]
