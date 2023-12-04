@@ -31,12 +31,12 @@ def index():
 def showsummary():
     email = request.form['email']
 
-    matching_clubs = [club for club in clubs if club.get('email') == email]
+    club = [club for club in clubs if club.get('email') == email]
 
-    if not email or not any(matching_clubs):
+    if not email or not any(club):
         return "Email non valide ou non existant, veuillez réessayer"
 
-    club = matching_clubs[0]
+    club = clubs[0]
     return render_template('welcome.html', club=club, competitions=competitions)
 
 
