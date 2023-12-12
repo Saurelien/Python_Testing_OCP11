@@ -46,10 +46,13 @@ def book(competition, club):
     foundclub = [c for c in clubs if c['name'] == club][0]
     foundcompetition = [c for c in competitions if c['name'] == competition][0]
     if foundclub and foundcompetition:
-        return render_template('booking.html', club=foundclub,competition=foundcompetition)
+        return render_template('booking.html', club=foundclub, competition=foundcompetition)
     else:
         flash("Something went wrong-please try again")
         return render_template('welcome.html', club=club, competitions=competitions)
+
+
+"""Fonctions auxiliaire"""
 
 
 def get_competition_by_name(name):
@@ -60,70 +63,63 @@ def get_club_by_name(name):
     return next((c for c in clubs if c['name'] == name), None)
 
 
-def check_quantity(places_required):
-    if places_required is None:
-        flash("Quantité de places non saisie.")
-        return False
-
-    try:
-        places_required = int(places_required)
-        if places_required <= 0:
-            raise ValueError
-    except ValueError:
-        flash("Quantité de places invalide. Veuillez réessayer.")
-        return False
-
-    return places_required
+def get_total_reserved_places(club_name, competition_name):
+    total_reserved = 0
+    if club_name in club_reservations and competition_name in club_reservations[club_name]:
+        total_reserved = club_reservations[club_name][competition_name]
+    return total_reserved
 
 
+@app.route('/purchasePlaces', methods=['POST'])
 def purchase_places():
-    competition_name = request.form.get('competition')
-    club_name = request.form.get('club')
-    places_required = request.form.get('places')
+    competition_name = request.form['competition']
+    club_name = request.form['club']
+    places_required = int(request.form['places'])
 
-    places_required = check_quantity(places_required)
-    if places_required is None:
-        return redirect(url_for('purchase_places'))
+    if places_required <= 0:
+        flash("Quantité de places invalide.")
+        return render_template('welcome.html', competitions=competitions)
 
     competition = get_competition_by_name(competition_name)
     club = get_club_by_name(club_name)
 
-    # Assurez-vous que les valeurs de points et de nombre de places sont des entiers
-    club['points'] = int(club['points'])
-    competition['numberOfPlaces'] = int(competition['numberOfPlaces'])
+    competition_places = int(competition['numberOfPlaces'])
+    club_points = int(club['points'])
+    total_reserved_places = get_total_reserved_places(club_name, competition_name)  # Modification ici
 
-    # Vérifiez si le club a assez de points pour réserver
-    if places_required > club['points']:
-        flash(f"Points insuffisants pour réserver cette quantité de places. Pts du club:{club['points']}")
-        return render_template('welcome.html')
+    if places_required > competition_places:
+        flash(f"Pas assez de places disponibles. Places restantes : {competition_places}")
+        return render_template('welcome.html', club=club, competitions=competitions)
 
-    # Vérifiez si le total des places réservées dans cette compétition dépasse 12
-    total_reserved_places = club.get('places_reserved', 0) + places_required
-    if total_reserved_places > 12:
-        flash("Vous ne pouvez pas réserver plus de 12 places pour cette compétition.")
-        return redirect(url_for('index'))
+    if places_required > club_points:
+        flash(
+            f"Pas assez de points disponibles pour réserver cette quantité de places."
+            f" Points restants du club : {club_points}")
+        return render_template('welcome.html', club=club, competitions=competitions)
 
-    # Vérifiez et effectuez la réservation
-    if places_required > competition['numberOfPlaces']:
-        flash("Nombre de places insuffisant pour cette réservation.")
-        return render_template('welcome.html')
+    if total_reserved_places + places_required > 12:
+        flash(
+            f"Le maximum de reservation est de 12."
+            f" Places déjà réservées : {total_reserved_places}")
+        return render_template('welcome.html', club=club, competitions=competitions)
 
-    # Réduisez les points du club et le nombre de places disponibles dans la compétition
-    club['points'] -= places_required
-    competition['numberOfPlaces'] -= places_required
+    club_points -= places_required
+    club['points'] = str(club_points)
 
-    # Mettez à jour le nombre total de places réservées par le club dans cette compétition
-    club['places_reserved'] = club.get('places_reserved', 0) + places_required
+    competition_places -= places_required
+    competition['numberOfPlaces'] = str(competition_places)
 
     if club_name not in club_reservations:
         club_reservations[club_name] = {}
 
-    if competition_name not in club_reservations[club_name]:
-        club_reservations[club_name][competition_name] = places_required
-    else:
-        club_reservations[club_name][competition_name] += places_required
+    club_reservations[club_name][competition_name] = club_reservations[club_name].get(competition_name,
+                                                                                      0) + places_required
 
+    flash(f'Super ! Réservation effectuée.Points restants du club : {club_points}')
+
+    # Redirection vers la page d'accueil après la réservation réussie
     return render_template('welcome.html', club=club, competitions=competitions)
+
 
 # TODO: Add route for points display
 
