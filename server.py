@@ -64,11 +64,12 @@ def book(competition, club):
 
 @app.route('/purchasePlaces', methods=['POST'])
 def purchaseplaces():
-    competition = [c for c in competitions if c['name'] == request.form['competition']][0]
-    club = [c for c in clubs if c['name'] == request.form['club']][0]
-    placesrequired = int(request.form['places'])
-    competition['numberOfPlaces'] = int(competition['numberOfPlaces'])-placesrequired
-    flash('Great-booking complete!')
+    competition = next(c for c in competitions if c['name'] == request.form['competition'])
+    club = next(c for c in clubs if c['name'] == request.form['club'])
+    places_required = int(request.form['places'])
+    competition['numberOfPlaces'] = int(competition['numberOfPlaces']) - places_required
+    club['points'] = str(int(club['points']) - places_required)
+    flash(f'Super! Réservation réussie! [Points du club restants: {club["points"]}]')
     return render_template('welcome.html', club=club, competitions=competitions)
 
 
