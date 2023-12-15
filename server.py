@@ -31,12 +31,12 @@ def index():
 def showsummary():
     email = request.form['email']
 
-    matching_clubs = [club for club in clubs if club.get('email') == email]
+    club = [club for club in clubs if club.get('email') == email]
 
-    if not email or not any(matching_clubs):
-        flash("Email non valide ou non existant, veuillez réessayer")
-        return render_template('index.html')
-    club = matching_clubs[0]
+    if not email or not any(club):
+        return "Email non valide ou non existant, veuillez réessayer"
+
+    club = clubs[0]
     return render_template('welcome.html', club=club, competitions=competitions)
 
 
@@ -52,38 +52,14 @@ def book(competition, club):
 
 
 @app.route('/purchasePlaces', methods=['POST'])
-def purchase_places():
-    competition_name = request.form['competition']
-    club_name = request.form['club']
-    places_required = request.form['places']
-
-    if not places_required or not places_required.isdigit() or int(places_required) <= 0:
-        flash("Quantité de places invalide.")
-        return redirect(url_for('index'))
-
-    places_required = int(places_required)
-
-    competition = next((c for c in competitions if c['name'] == competition_name), None)
-    club = next((c for c in clubs if c['name'] == club_name), None)
-    competition_places = int(competition['numberOfPlaces'])
-    club_points = int(club['points'])
-
-    if places_required > competition_places:
-        flash("Pas assez de places disponibles.")
-        return redirect(url_for('index'))
-
-    if places_required > club_points:
-        flash("Pas assez de points disponibles pour réserver cette quantité de places.")
-        return render_template('index.html', club=club, competitions=competitions)
-
-    # Test deduction des points lors du booking par le secretaire
-    club_points -= places_required
-    club['points'] = str(club_points)
-
-    competition['numberOfPlaces'] = str(int(competition['numberOfPlaces']) - places_required)
-
-    flash('Super ! Réservation effectuée.')
+def purchaseplaces():
+    competition = [c for c in competitions if c['name'] == request.form['competition']][0]
+    club = [c for c in clubs if c['name'] == request.form['club']][0]
+    placesrequired = int(request.form['places'])
+    competition['numberOfPlaces'] = int(competition['numberOfPlaces'])-placesrequired
+    flash('Great-booking complete!')
     return render_template('welcome.html', club=club, competitions=competitions)
+
 
 # TODO: Add route for points display
 
