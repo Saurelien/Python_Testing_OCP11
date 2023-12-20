@@ -20,6 +20,7 @@ app.secret_key = 'something_special'
 
 competitions = loadcompetitions()
 clubs = loadclubs()
+club_reservations = {}
 
 
 @app.route('/')
@@ -51,32 +52,73 @@ def book(competition, club):
         return render_template('welcome.html', club=club, competitions=competitions)
 
 
+"""Fonctions auxiliaire"""
+
+
+def get_competition_by_name(name):
+    return next((c for c in competitions if c['name'] == name), None)
+
+
+def get_club_by_name(name):
+    return next((c for c in clubs if c['name'] == name), None)
+
+
+def get_total_reserved_places(club_name, competition_name):
+    total_reserved = 0
+    if club_name in club_reservations and competition_name in club_reservations[club_name]:
+        total_reserved = club_reservations[club_name][competition_name]
+    return total_reserved
+
+
 @app.route('/purchasePlaces', methods=['POST'])
-def purchaseplaces():
+def purchase_places():
     competition_name = request.form['competition']
     club_name = request.form['club']
     places_required = int(request.form['places'])
 
-    found_competition = next((c for c in competitions if c['name'] == competition_name), None)
-    found_club = next((c for c in clubs if c['name'] == club_name), None)
+    if places_required <= 0:
+        flash("Quantité de places invalide.")
+        return render_template('welcome.html', competitions=competitions)
 
-    if not (found_competition and found_club):
-        flash("Compétition ou club non trouvés.")
-        return render_template('welcome.html', club=club_name, competitions=competitions)
+    competition = get_competition_by_name(competition_name)
+    club = get_club_by_name(club_name)
 
-    available_places = int(found_competition.get('numberOfPlaces', 0))
-    club_points = int(found_club.get('points', 0))
+    competition_places = int(competition['numberOfPlaces'])
+    club_points = int(club['points'])
+    total_reserved_places = get_total_reserved_places(club_name, competition_name)  # Modification ici
 
-    if places_required > available_places:
-        flash("Désolé, pas assez de places disponibles.")
-    elif places_required > club_points:
-        flash("Le club ne dispose pas assez de points pour effectuer la réservation.")
-    else:
-        flash('Super ! Réservation effectuée avec succès !')
-        found_competition['numberOfPlaces'] = str(available_places - places_required)
-        found_club['points'] = str(club_points - places_required)
+    if places_required > competition_places:
+        flash(f"Pas assez de places disponibles. Places restantes : {competition_places}")
+        return render_template('welcome.html', club=club, competitions=competitions)
 
-    return render_template('welcome.html', club=found_club, competitions=competitions)
+    if places_required > club_points:
+        flash(
+            f"Pas assez de points disponibles pour réserver cette quantité de places."
+            f" Points restants du club : {club_points}")
+        return render_template('welcome.html', club=club, competitions=competitions)
+
+    if total_reserved_places + places_required > 12:
+        flash(
+            f"Le maximum de reservation est de 12."
+            f" Places déjà réservées : {total_reserved_places}")
+        return render_template('welcome.html', club=club, competitions=competitions)
+
+    club_points -= places_required
+    club['points'] = str(club_points)
+
+    competition_places -= places_required
+    competition['numberOfPlaces'] = str(competition_places)
+
+    if club_name not in club_reservations:
+        club_reservations[club_name] = {}
+
+    club_reservations[club_name][competition_name] = club_reservations[club_name].get(competition_name,
+                                                                                      0) + places_required
+
+    flash(f'Super ! Réservation effectuée.Points restants du club : {club_points}')
+
+    # Redirection vers la page d'accueil après la réservation réussie
+    return render_template('welcome.html', club=club, competitions=competitions)
 
 
 # TODO: Add route for points display
