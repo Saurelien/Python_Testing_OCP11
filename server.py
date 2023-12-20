@@ -1,5 +1,6 @@
 import json
 from flask import Flask, render_template, request, redirect, flash, url_for
+from datetime import datetime
 
 
 def loadclubs():
@@ -32,12 +33,12 @@ def index():
 def showsummary():
     email = request.form['email']
 
-    club = [club for club in clubs if club.get('email') == email]
+    matching_clubs = [club for club in clubs if club.get('email') == email]
 
-    if not email or not any(club):
+    if not email or not any(matching_clubs):
         return "Email non valide ou non existant, veuillez réessayer"
 
-    club = clubs[0]
+    club = matching_clubs[0]
     return render_template('welcome.html', club=club, competitions=competitions)
 
 
@@ -50,6 +51,12 @@ def book(competition, club):
     else:
         flash("Something went wrong-please try again")
         return render_template('welcome.html', club=club, competitions=competitions)
+    competition_date = datetime.strptime(foundcompetition['date'], '%Y-%m-%d %H:%M:%S')
+    current_date = datetime.now()
+    if competition_date < current_date:
+        flash(f"La compétition a déjà eu lieu. Date de la compétition : {foundcompetition['date']}.")
+        return render_template('welcome.html', club=foundclub, competitions=competitions)
+    return render_template('booking.html', club=foundclub, competition=foundcompetition)
 
 
 """Fonctions auxiliaire"""
