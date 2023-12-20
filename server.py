@@ -38,9 +38,6 @@ def showsummary():
         return "Email non valide ou non existant, veuillez réessayer"
 
     club = matching_clubs[0]
-    valid_competitions = [c for c in competitions if
-                          datetime.strptime(c['date'], '%Y-%m-%d %H:%M:%S') > datetime.now()]
-    flash(f"Calendrier des compétition disponible {valid_competitions}")
     return render_template('welcome.html', club=club, competitions=competitions)
 
 
