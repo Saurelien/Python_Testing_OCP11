@@ -70,7 +70,7 @@ def get_total_reserved_places(club_name, competition_name):
     total_reserved = 0
     if club_name in club_reservations and competition_name in club_reservations[club_name]:
         total_reserved = club_reservations[club_name][competition_name]
-    print(club_reservations)
+        print(club_reservations)
     return total_reserved
 
 
