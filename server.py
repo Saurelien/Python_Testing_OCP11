@@ -47,16 +47,12 @@ def showsummary():
 def book(competition, club):
     foundclub = next((c for c in clubs if c['name'] == club), None)
     foundcompetition = next((c for c in competitions if c['name'] == competition), None)
-    if not foundclub or not foundcompetition:
-        return render_template('welcome.html', club=club, competitions=competitions)
     competition_date = datetime.strptime(foundcompetition['date'], '%Y-%m-%d %H:%M:%S')
     current_date = datetime.now()
     if competition_date < current_date:
         flash(f"La compétition a déjà eu lieu. Date de la compétition: {foundcompetition['date']}.")
         return render_template('welcome.html', club=foundclub, competitions=competitions)
     return render_template('booking.html', club=foundclub, competition=foundcompetition)
-        flash(f"La compétition a déjà eu lieu. Date de la compétition : {foundcompetition['date']}.")
-    return render_template('welcome.html', club=club, competitions=competitions)
 
 
 """Fonctions auxiliaire"""
