@@ -34,26 +34,29 @@ def showsummary():
     email = request.form['email']
 
     matching_clubs = [club for club in clubs if club.get('email') == email]
+    club_data = [{'name': club['name'], 'points': club['points']} for club in clubs if club.get('email') != email]
 
     if not email or not any(matching_clubs):
         return "Email non valide ou non existant, veuillez réessayer"
 
     club = matching_clubs[0]
-    return render_template('welcome.html', club=club, competitions=competitions)
+    return render_template('welcome.html', club=club, club_data=club_data, competitions=competitions)
 
 
 @app.route('/book/<competition>/<club>')
 def book(competition, club):
     foundclub = [c for c in clubs if c['name'] == club][0]
     foundcompetition = [c for c in competitions if c['name'] == competition][0]
-    if foundclub and foundcompetition:
-        return render_template('booking.html', club=foundclub, competition=foundcompetition)
+    if not foundclub:
+        flash("Pas trouvé")
+    if not foundcompetition:
+        flash("Pas trouvé")
     competition_date = datetime.strptime(foundcompetition['date'], '%Y-%m-%d %H:%M:%S')
     current_date = datetime.now()
+    print(competition_date, current_date)
     if competition_date < current_date:
         flash(f"La compétition a déjà eu lieu. Date de la compétition : {foundcompetition['date']}.")
-        return render_template('welcome.html', club=foundclub, competitions=competitions)
-    return render_template('booking.html', club=foundclub, competition=foundcompetition)
+    return render_template('welcome.html', club=club, competitions=competitions)
 
 
 """Fonctions auxiliaire"""
@@ -71,6 +74,7 @@ def get_total_reserved_places(club_name, competition_name):
     total_reserved = 0
     if club_name in club_reservations and competition_name in club_reservations[club_name]:
         total_reserved = club_reservations[club_name][competition_name]
+    print(club_reservations)
     return total_reserved
 
 
@@ -118,10 +122,9 @@ def purchase_places():
 
     club_reservations[club_name][competition_name] = club_reservations[club_name].get(competition_name,
                                                                                       0) + places_required
-
+    print(club_reservations)
     flash(f'Super ! Réservation effectuée.Points restants du club : {club_points}')
 
-    # Redirection vers la page d'accueil après la réservation réussie
     return render_template('welcome.html', club=club, competitions=competitions)
 
 

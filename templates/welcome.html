@@ -10,12 +10,27 @@
     {% with messages = get_flashed_messages()%}
     {% if messages %}
         <ul>
-       {% for message in messages %}
-            <li>{{message}}</li>
-        {% endfor %}
-       </ul>
+            {% for message in messages %}
+                <li>{{message}}</li>
+            {% endfor %}
+        </ul>
     {% endif%}
-    Points available: {{club['points']}}
+    <ul>
+        <li>
+            <span>Name of the club:</span><br>
+            <span>{{ club['name'] }}</span>
+        </li>
+        <li>
+            <span>Points available:</span><br>
+            <span>{{ club['points'] }}</span>
+        </li>
+    </ul>
+        <h3>Liste des clubs: </h3>
+        <ul>
+            {% for club in club_data %}
+                <li>{{ club.name }} - Points: {{ club.points }}</li>
+            {% endfor %}
+        </ul>
     <h3>Competitions:</h3>
     <ul>
         {% for comp in competitions%}
