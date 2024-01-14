@@ -6,3 +6,7 @@ tests/
 .envrc
 __pycache__
 .idea
+/assets
+/htmlcov
+.coverage
+/.pytest_cache

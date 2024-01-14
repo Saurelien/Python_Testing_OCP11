@@ -18,10 +18,11 @@ def loadcompetitions():
 
 app = Flask(__name__)
 app.secret_key = 'something_special'
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['JSON_AS_ASCII'] = False
 
 competitions = loadcompetitions()
 clubs = loadclubs()
-club_reservations = {}
 
 
 @app.route('/')
@@ -34,11 +35,12 @@ def showsummary():
     email = request.form['email']
 
     matching_clubs = [club for club in clubs if club.get('email') == email]
-    club_data = [{'name': club['name'], 'points': club['points']} for club in clubs if club.get('email') != email]
+    club_data = [{'name': club['name'], 'points': club['points']} for club in clubs if club.get('email')]
 
     if not email or not any(matching_clubs):
-        return "Email non valide ou non existant, veuillez réessayer"
-
+        message = "Email non valide ou non existant, veuillez réessayer"
+        flash(message)
+        return render_template('index.html')
     club = matching_clubs[0]
     return render_template('welcome.html', club=club, club_data=club_data, competitions=competitions)
 
@@ -50,8 +52,9 @@ def book(competition, club):
     competition_date = datetime.strptime(foundcompetition['date'], '%Y-%m-%d %H:%M:%S')
     current_date = datetime.now()
     if competition_date < current_date:
-        flash(f"La compétition a déjà eu lieu. Date de la compétition: {foundcompetition['date']}.")
-        return render_template('welcome.html', club=foundclub, competitions=competitions)
+        message = "La compétition a déjà eu lieu. Date de la compétition"
+        flash(f"{message}: {foundcompetition['date']}.")
+        return render_template('welcome.html', club=foundclub, competitions=competitions, club_data=clubs)
     return render_template('booking.html', club=foundclub, competition=foundcompetition)
 
 
@@ -66,65 +69,53 @@ def get_club_by_name(name):
     return next((c for c in clubs if c['name'] == name), None)
 
 
-def get_total_reserved_places(club_name, competition_name):
-    total_reserved = 0
-    if club_name in club_reservations and competition_name in club_reservations[club_name]:
-        total_reserved = club_reservations[club_name][competition_name]
-        print(club_reservations)
-    return total_reserved
-
-
 @app.route('/purchasePlaces', methods=['POST'])
 def purchase_places():
     competition_name = request.form['competition']
     club_name = request.form['club']
     places_required = int(request.form['places'])
+    messages = list()
 
     if places_required <= 0:
-        flash("Quantité de places invalide.")
-        return render_template('welcome.html', competitions=competitions)
+        messages.append("Quantité de places invalide.")
+
+    if places_required > 12:
+        messages.append("Le maximum de reservation est de 12.")
 
     competition = get_competition_by_name(competition_name)
+
+    if not competition:
+        messages.append("Compétition invalide")
+
     club = get_club_by_name(club_name)
+    if not club:
+        messages.append("Club invalide")
+
+    if messages:
+        for message in messages:
+            flash(message)
+        return render_template('welcome.html', club=club, competitions=competitions, club_data=clubs)
 
     competition_places = int(competition['numberOfPlaces'])
     club_points = int(club['points'])
-    total_reserved_places = get_total_reserved_places(club_name, competition_name)  # Modification ici
 
     if places_required > competition_places:
-        flash(f"Pas assez de places disponibles. Places restantes : {competition_places}")
-        return render_template('welcome.html', club=club, competitions=competitions)
+        messages.append(f"Pas assez de places disponibles.")
 
     if places_required > club_points:
-        flash(
-            f"Pas assez de points disponibles pour réserver cette quantité de places."
-            f" Points restants du club : {club_points}")
-        return render_template('welcome.html', club=club, competitions=competitions)
+        messages.append(f"Pas assez de points disponibles pour réserver cette quantité de places.")
 
-    if total_reserved_places + places_required > 12:
-        flash(
-            f"Le maximum de reservation est de 12."
-            f" Places déjà réservées : {total_reserved_places}")
-        return render_template('welcome.html', club=club, competitions=competitions)
+    if messages:
+        for message in messages:
+            flash(message)
+        return render_template('welcome.html', club=club, competitions=competitions, club_data=clubs)
 
     club_points -= places_required
     club['points'] = str(club_points)
-
     competition_places -= places_required
     competition['numberOfPlaces'] = str(competition_places)
-
-    if club_name not in club_reservations:
-        club_reservations[club_name] = {}
-
-    club_reservations[club_name][competition_name] = club_reservations[club_name].get(competition_name,
-                                                                                      0) + places_required
-    print(club_reservations)
-    flash(f'Super ! Réservation effectuée.Points restants du club : {club_points}')
-
-    return render_template('welcome.html', club=club, competitions=competitions)
-
-
-# TODO: Add route for points display
+    flash("Super ! Réservation effectuée.")
+    return render_template('welcome.html', club=club, competitions=competitions, club_data=clubs)
 
 
 @app.route('/logout')
