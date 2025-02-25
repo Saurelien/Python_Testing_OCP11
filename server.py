@@ -42,6 +42,8 @@ def showsummary():
         flash(message)
         return render_template('index.html')
     club = matching_clubs[0]
+    print(club_data)
+    print(f"Club sélectionné: {club}")
     return render_template('welcome.html', club=club, club_data=club_data, competitions=competitions)
 
 
@@ -114,7 +116,7 @@ def purchase_places():
     club['points'] = str(club_points)
     competition_places -= places_required
     competition['numberOfPlaces'] = str(competition_places)
-    flash("Super ! Réservation effectuée.")
+    flash(f"Super ! Réservation effectuée. Nombre de places reservées: {places_required}")
     return render_template('welcome.html', club=club, competitions=competitions, club_data=clubs)
 
 

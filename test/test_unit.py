@@ -9,7 +9,7 @@ def test_get_competition_success(mock_competitions):
 
 
 def test_get_competition_error(mock_competitions):
-    competition = get_competition_by_name("Does not existe")
+    competition = get_competition_by_name("Does not exist")
     assert competition is None
 
 

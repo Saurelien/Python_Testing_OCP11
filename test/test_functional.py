@@ -6,8 +6,8 @@ from test.mocks import VALID_EMAIL, VALID_COMPETITIONS, ZERO_PLACES_COMPETITIONS
 def test_index(client):
     response = client.get('/')
     assert response.status_code == 200
-    exped = f"Welcome to the GUDLFT Registration Portal!".encode('utf-8')
-    assert exped in response.data
+    expected = f"Welcome to the GUDLFT Registration Portal!".encode('utf-8')
+    assert expected in response.data
 
 
 def test_valid_email(client, mock_clubs):
@@ -17,8 +17,8 @@ def test_valid_email(client, mock_clubs):
     }
     response = client.post(url, data=data)
     assert response.status_code == 200
-    exped = f"Welcome, {data['email']}"
-    assert exped in str(response.data)
+    expected = f"Welcome, {data['email']}"
+    assert expected in str(response.data)
 
 
 def test_invalid_email(client, mock_clubs):
@@ -62,7 +62,8 @@ def test_reservation_between_1_and_12_places(client, mock_clubs, mock_competitio
         'places': '12'
     })
     assert response.status_code == 200
-    expected_message = "Super ! Réservation effectuée.".encode('utf-8')
+    places_required = 12
+    expected_message = f"Super ! Réservation effectuée. Nombre de places reservées: {places_required}".encode('utf-8')
     assert expected_message in response.data
 
 

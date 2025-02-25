@@ -87,7 +87,8 @@ def test_integration(client, mock_clubs, mock_competitions):
         'places': '12'
     })
     assert response.status_code == 200
-    expected_message = "Super ! Réservation effectuée.".encode('utf-8')
+    places_required = 12
+    expected_message = f"Super ! Réservation effectuée. Nombre de places reservées: {places_required}".encode('utf-8')
     assert expected_message in response.data
 
     response_logout = client.get('/logout', follow_redirects=True)
