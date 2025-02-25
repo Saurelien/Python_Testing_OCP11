@@ -11,7 +11,6 @@ def test_index(client):
 
 
 def test_valid_email(client, mock_clubs):
-    #  Etape 1 email valide
     url = "/showSummary"
     data = {
         'email': VALID_EMAIL
@@ -23,7 +22,6 @@ def test_valid_email(client, mock_clubs):
 
 
 def test_invalid_email(client, mock_clubs):
-    # Etape 2 email invalide
     url = "/showSummary"
     invalid_email = 'random@email.com'
     data = {
@@ -132,6 +130,4 @@ def test_logout(client):
     logout_response = client.get('/logout', follow_redirects=True)
     expected_message = "Welcome to the GUDLFT Registration Portal!".encode('utf-8')
     assert expected_message in logout_response.data
-
-
 
