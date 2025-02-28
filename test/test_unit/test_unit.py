@@ -42,30 +42,26 @@ def test_show_summary_invalid_email(client, mock_clubs):
     assert b"Email non valide ou non existant" in response.data
 
 
-def test_book_valid(client, mock_clubs, mock_competitions):
+def test_book(client, mock_clubs, mock_competitions):
     future_competition = {
-        'name': 'Test Competition',
+        'name': 'Future Competition',
         'date': (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S'),
         'numberOfPlaces': 10
     }
     mocks.MOCK_COMPETITIONS.append(future_competition)
+
     response = client.get(f'/book/{future_competition["name"]}/{mocks.CLUB_VALID}')
-    decoded_data = response.data.decode('utf-8')
-
-    assert 'How many places?' in decoded_data
-    assert "La compétition a déjà eu lieu" not in decoded_data
-
+    assert response.status_code == 200
+    assert 'How many places?' in response.data.decode('utf-8')
 
     past_competition = {
         'name': 'Past Competition',
         'date': (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S'),
         'numberOfPlaces': 5
     }
-
     mocks.MOCK_COMPETITIONS.append(past_competition)
 
     response = client.get(f'/book/{past_competition["name"]}/{mocks.CLUB_VALID}')
-    decoded_data = response.data.decode('utf-8')
-
-    assert "La compétition a déjà eu lieu" in decoded_data
-    assert 'How many places?' not in decoded_data
+    assert response.status_code == 200
+    assert 'La compétition a déjà eu lieu' in response.data.decode('utf-8')
+    assert 'How many places?' not in response.data.decode('utf-8')
