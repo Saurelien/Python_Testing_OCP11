@@ -31,7 +31,7 @@ def index():
 
 
 @app.route('/showSummary', methods=['POST'])
-def showsummary():
+def show_summary():
     email = request.form['email']
 
     matching_clubs = [club for club in clubs if club.get('email') == email]
@@ -40,24 +40,22 @@ def showsummary():
     if not email or not any(matching_clubs):
         message = "Email non valide ou non existant, veuillez réessayer"
         flash(message)
-        return render_template('index.html')
+        return render_template('index.html', club_data=clubs)
     club = matching_clubs[0]
-    print(club_data)
-    print(f"Club sélectionné: {club}")
     return render_template('welcome.html', club=club, club_data=club_data, competitions=competitions)
 
 
 @app.route('/book/<competition>/<club>')
 def book(competition, club):
-    foundclub = next((c for c in clubs if c['name'] == club), None)
-    foundcompetition = next((c for c in competitions if c['name'] == competition), None)
-    competition_date = datetime.strptime(foundcompetition['date'], '%Y-%m-%d %H:%M:%S')
+    found_club = ([c for c in clubs if c['name'] == club] or [None])[0]
+    found_competition = ([c for c in competitions if c['name'] == competition] or [None])[0]
+    competition_date = datetime.strptime(found_competition['date'], '%Y-%m-%d %H:%M:%S')
     current_date = datetime.now()
     if competition_date < current_date:
         message = "La compétition a déjà eu lieu. Date de la compétition"
-        flash(f"{message}: {foundcompetition['date']}.")
-        return render_template('welcome.html', club=foundclub, competitions=competitions, club_data=clubs)
-    return render_template('booking.html', club=foundclub, competition=foundcompetition)
+        flash(f"{message}: {found_competition}.")
+        return render_template('welcome.html', club=found_club, competitions=competitions, club_data=clubs)
+    return render_template('booking.html', club=found_club, competition=found_competition)
 
 
 """Fonctions auxiliaire"""
